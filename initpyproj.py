@@ -1,14 +1,15 @@
 from pathlib import Path
 from os import mkdir
+from subprocess import run
 
 _dirs = ["_core", "scripts", "tests", "data"]
 _files = {
-    "LICENSE": Path(__file__).parent / Path("templates/[template]LICENSE"),
-    "CHANGELOG.md": Path(__file__).parent / Path("templates/[template]CHANGELOG"),
-    "MANISFEST.in": Path(__file__).parent / Path("templates/[template]MANIFEST"),
-    "README.md": Path(__file__).parent / Path("templates/[template]README"),
-    "setup.py": Path(__file__).parent / Path("templates/[template]setup"),
-    ".gitginore": Path(__file__).parent / Path("templates/[template]gitignore")
+    "LICENSE": Path(__file__).parent / Path("data/templates/[template]LICENSE"),
+    "CHANGELOG.md": Path(__file__).parent / Path("data/templates/[template]CHANGELOG"),
+    "MANISFEST.in": Path(__file__).parent / Path("data/templates/[template]MANIFEST"),
+    "README.md": Path(__file__).parent / Path("data/templates/[template]README"),
+    "setup.py": Path(__file__).parent / Path("data/templates/[template]setup"),
+    ".gitginore": Path(__file__).parent / Path("data/templates/[template]gitignore")
 }
 _variables = ["<NAME>", "<URL>", "<DESCRIPTION>", "<KEYWORDS>"]
 
@@ -36,5 +37,13 @@ def createLocalDirectory(path: Path, name: str, url: str, description: str = "",
         with open(file = path / name / fileName, mode = "x") as fp:
             fp.write(fileContent)
 
+def createLocalGitRepo(path: Path) -> None:
+    run(["git", "init"], shell = True, cwd = str(path), check = True)
+    run(["git", "add", "-A"], shell = True, cwd = str(path), check = True)
+    run(["git", "commit", "-m", '"initial commit by initpyproj"'], shell = True, cwd = str(path), check = True)
+
 if (__name__ == "__main__"):
-    createLocalDirectory(path = Path("D:\Desktop"), name = "sampleproj", url = "notaurl", description = "notadescr", keywords = ["one", "two", "three"])
+    parentDir = Path("D:\Desktop")
+    name = "sampleproj"
+    createLocalDirectory(path = parentDir, name = name, url = "notaurl", description = "notadescr", keywords = ["one", "two", "three"])
+    createLocalGitRepo(path = parentDir / name)
