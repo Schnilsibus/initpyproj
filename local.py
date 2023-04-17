@@ -10,8 +10,20 @@ _files = {
     "setup.py": Path(__file__).parent / Path("templates/[template]setup"),
     ".gitginore": Path(__file__).parent / Path("templates/[template]gitignore")
 }
+_variables = ["<NAME>", "<URL>", "<DESCRIPTION>", "<KEYWORDS>"]
 
-def createLocalDirectory(path: Path, name: str, url: str):
+def replaceVariables(content: str, data: list) -> str:
+    for i in range(len(_variables)):
+        if (content.__contains__(_variables[i])):
+            if (not i == len(_variables) - 1):
+                content = content.replace(_variables[i], data[i])
+            elif (not type(data[i]) == type(None)):
+                content = content.replace(_variables[i], "[" + ", ".join(data[i]) + "]")
+            else:
+                content = content.replace(_variables[i], "[]")
+    return content
+
+def createLocalDirectory(path: Path, name: str, url: str, description: str = "", keywords: list = None) -> None:
     mkdir(path = path / name)
     for dirName in _dirs:
         fullPath = path / name / dirName
@@ -20,12 +32,9 @@ def createLocalDirectory(path: Path, name: str, url: str):
     for fileName in _files.keys():
         with open(file = _files[fileName], mode = "r") as fp:
             fileContent = fp.read()
-        if (fileName == "setup.py"):
-            # TODO insert name; url etc in setup.py
-            pass
+        fileContent = replaceVariables(content = fileContent, data = [name, url, description, keywords])
         with open(file = path / name / fileName, mode = "x") as fp:
             fp.write(fileContent)
 
 if (__name__ == "__main__"):
-    pathInput = input("input a path: ")
-    createLocalDirectory(path = Path(pathInput), name = "sampleproj", url = "notaurl")
+    createLocalDirectory(path = Path("D:\Desktop"), name = "sampleproj", url = "notaurl", description = "notadescr", keywords = ["one", "two", "three"])
