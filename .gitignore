@@ -130,3 +130,6 @@ dmypy.json
 
 # Dev Test files
 *[Tt]est*.py
+
+# Ignore .idea dir of pycharm
+.\idea
