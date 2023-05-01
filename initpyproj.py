@@ -2,16 +2,35 @@ from pathlib import Path
 from os import mkdir
 from subprocess import run, CalledProcessError
 from argparse import ArgumentParser, Namespace
+import typing
 
 _dirs = ["_core", "scripts", "tests", "data"]
 _files = {
     "LICENSE": Path(__file__).parent / Path("templates/[template]LICENSE"),
     "CHANGELOG.md": Path(__file__).parent / Path("templates/[template]CHANGELOG"),
-    "MANISFEST.in": Path(__file__).parent / Path("templates/[template]MANIFEST"),
+    "MANIFEST.in": Path(__file__).parent / Path("templates/[template]MANIFEST"),
     "README.md": Path(__file__).parent / Path("templates/[template]README"),
     "setup.py": Path(__file__).parent / Path("templates/[template]setup"),
-    ".gitginore": Path(__file__).parent / Path("templates/[template]gitignore")
+    ".gitignore": Path(__file__).parent / Path("templates/[template]gitignore")
 }
+
+class Logger:
+
+    verbosity_types = [0, 1, 2]
+    def __init__(self, verbosity: int) -> None:
+        if (not type(verbosity) == int):
+            raise TypeError(f"The argument 'verbosity' must be of type int")
+        if (verbosity not in self.verbosity_types):
+            raise ValueError(f"The argument 'verbosity' must be one of {self.verbosity_types}")
+        self.verbosity = verbosity
+
+    def log(self, normal: str, verbose: str) -> None:
+        if (self.verbosity == 0):
+            return
+        if (self.verbosity == 1):
+            print(normal)
+        if (self.verbosity == 2):
+            print(verbose)
 
 def replaceVariable(content: str, variable: str, data: str) -> str:
     if (content.__contains__(variable)):
@@ -32,7 +51,9 @@ def createLocalDirectory(parentDir: Path, name: str, description: str = "", keyw
         fileContent = replaceVariable(content = fileContent, variable = "<NAME>", data = name)
         fileContent = replaceVariable(content = fileContent, variable = "<DESCRIPTION>", data = description)
         if (keywords):
-            fileContent = replaceVariable(content = fileContent, variable = "<KEYWORDS>", data = "[" + ", ".join(keywords) + "]")
+            fileContent = replaceVariable(content = fileContent, variable = "<KEYWORDS>", data = "[" +
+                                                                                                 ", ".join(keywords) +
+                                                                                                 "]")
         else:
             fileContent = replaceVariable(content = fileContent, variable = "<KEYWORDS>", data = "[]")
         with open(file = parentDir / name / fileName, mode = "x") as fp:
@@ -73,9 +94,11 @@ def pushLocalChanges(path: Path) -> None:
 def createGitHubRepo(path: Path, name: str, description: str = None) -> str:
     try:
         if (description):
-            stdout = run(["gh", "repo", "create", f"{name}", f"-d={description}", "--public", "-r=origin", "-s=."], shell = True, cwd = str(path), check = True, capture_output = True, text = True).stdout
+            stdout = run(["gh", "repo", "create", f"{name}", f"-d={description}", "--public", "-r=origin", "-s=."],
+                         shell = True, cwd = str(path), check = True, capture_output = True, text = True).stdout
         else:
-            stdout = run(["gh", "repo", "create", f"{name}", "--public", "-r=origin", "-s=."], shell = True, cwd = str(path), check = True, capture_output = True, text = True).stdout
+            stdout = run(["gh", "repo", "create", f"{name}", "--public", "-r=origin", "-s=."], shell = True,
+                         cwd = str(path), check = True, capture_output = True, text = True).stdout
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
     protocoll = getGitHubCLIProtocoll()
@@ -106,23 +129,36 @@ def constructArgumentParser() -> ArgumentParser:
         allow_abbrev = True
         )
     parser.add_argument("name", help = "the name of the new python project", type = str)
-    parser.add_argument("-d", "--description", help = "a short discription of the python project", type = str, default = "")
+    parser.add_argument("-d", "--description", help = "a short description of the python project", type = str,
+                        default = "")
     parser.add_argument("-kw", "--keywords", help = "some keywords for the python project", nargs = "*")
-    parser.add_argument("-dir", "--parent-dir", help = "the parent dir of the python project, if omitted the current working directory is used")
-    parser.add_argument("--no-git", help = "will not create a local git repo (and no GitHub repo)", action = "store_true")
+    parser.add_argument("-dir", "--parent-dir",
+                        help = "the parent dir of the python project, if omitted the current working directory is used")
+    parser.add_argument("--no-git", help = "will not create a local git repo (and no GitHub repo)",
+                        action = "store_true")
     parser.add_argument("--no-GitHub", help = "will create a local git repo but no GitHub repo", action = "store_true")
     verbosityGroup = parser.add_mutually_exclusive_group()
-    verbosityGroup.add_argument("-v", "--verbose", help = "enables verbose outupt", action = "store_true")
+    verbosityGroup.add_argument("-v", "--verbose", help = "enables verbose output", action = "store_true")
     verbosityGroup.add_argument("-q", "--quiet", help = "disables any output", action = "store_true")
 
     return parser
 
 def main(args: Namespace) -> None:
-    name = args.name
     parentDir = Path(args.parent_dir) if args.parent_dir else Path.cwd()
-    path = parentDir / name
-    createLocalDirectory(parentDir = parentDir, name = name, description = args.description, keywords = args.keywords)
-
+    path = parentDir / args.name
+    logger = Logger(verbosity = 1)
+    if (args.quiet):
+        logger = Logger(verbosity=0)
+    elif (args.verbose):
+        logger = Logger(verbosity=2)
+    createLocalDirectory(parentDir = parentDir, name = args.name, description = args.description,
+                         keywords = args.keywords)
+    if (not args.no_git):
+        raise NotImplementedError()
+    # create git repo
+    if (not (args.no_git or args.no_GitHub)):
+        raise NotImplementedError()
+    # create git hub repo
 
 if (__name__ == "__main__"):
     parser = constructArgumentParser()
