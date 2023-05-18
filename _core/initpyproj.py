@@ -173,7 +173,7 @@ def construct_argument_parser() -> ArgumentParser:
 
 
 def setup_logging(disabled: bool, level) -> None:
-    logging.basicConfig(level=level)
+    logging.basicConfig(level=level, format='%(asctime)s %(message)s')
     if disabled:
         logging.disable()
 
@@ -183,15 +183,19 @@ def main(args: Namespace) -> None:
     setup_logging(disabled=args.logDisabeld, level=args.logLevel)
     create_local_directory(parent_dir=parent_dir, name=args.name, description=args.description,
                            keywords=args.keywords)
+    logging.debug(msg=f"created local dir at: {str(parent_dir / args.name)}")
     if not args.no_git:
         create_local_git_repo(path=parent_dir / args.name)
         add_all_changes_local(path=parent_dir / args.name)
         commit_all_changes_local(path=parent_dir / args.name)
+        logging.debug(msg=f"created local git repo at: {str(parent_dir / args.name)}")
     if not (args.no_git or args.no_GitHub):
-        create_git_hub_repo(path=parent_dir / args.name,
-                            name=args.name,
-                            description=args.description,
-                            private=args.private)
+        gh_repo_info = create_git_hub_repo(path=parent_dir / args.name,
+                                           name=args.name,
+                                           description=args.description,
+                                           private=args.private)
+        push_local_changes(path=parent_dir / args.name)
+        logging.debug(msg=f"created GitHub repo: {gh_repo_info}")
 
 
 if __name__ == "__main__":
