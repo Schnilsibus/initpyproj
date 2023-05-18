@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     license="MIT",
     keywords=[],
-    url="<URL>",
+    url="https://github.com/Schnilsibus/initpyproj",
     package_dir={"": "_core"},
     classifiers=[
         "Development Status :: 3 - Alpha",

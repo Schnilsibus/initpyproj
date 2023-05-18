@@ -13,7 +13,6 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     license="MIT",
     keywords=<KEYWORDS>,
-    url="<URL>",
     package_dir={"": "_core"},
     classifiers=[
         "Development Status :: 3 - Alpha",

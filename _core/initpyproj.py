@@ -53,15 +53,6 @@ def create_local_directory(
             fp.write(file_content)
 
 
-def write_url_in_local_files(path: Path, url: str) -> None:
-    full_path = path / "setup.py"
-    with open(file=full_path, mode="r") as fp:
-        content = fp.read()
-    content = replace_variable(content=content, variable="<URL>", data=url)
-    with open(file=full_path, mode="w") as fp:
-        fp.write(content)
-
-
 def create_local_git_repo(path: Path) -> None:
     try:
         run(["git", "init", "-q"], shell=True, cwd=str(path), check=True)
@@ -83,7 +74,7 @@ def add_all_changes_local(path: Path) -> None:
         raise ChildProcessError(ex.stderr)
 
 
-def create_git_hub_repo(path: Path, name: str, description: str = None, private: str = False) -> None:
+def create_git_hub_repo(path: Path, name: str, description: str = None, private: str = False):
     try:
         command = ["gh", "repo", "create", f"{name}", "-r=origin", "-s=.", "--push"]
         if description:
@@ -188,7 +179,7 @@ def main(args: Namespace) -> None:
                             name=args.name,
                             description=args.description,
                             private=args.private)
-        logging.info(msg="created GitHub repo")
+        logging.info(msg=f"created GitHub repo")
 
 
 if __name__ == "__main__":
