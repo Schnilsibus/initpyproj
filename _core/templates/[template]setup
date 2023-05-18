@@ -6,8 +6,8 @@ with open("README.md", "r") as fp:
 setuptools.setup(
     name="<NAME>",
     version="0.0.0",
-    author="Nils Urbach",
-    author_email="ndu01u@gmail.com",
+    author="<AUTHOR>",
+    author_email="<MAIL>",
     description="<DESCRIPTION>",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -21,7 +21,7 @@ def replace_variable(content: str, variable: str, data: str) -> str:
     return content
 
 
-def create_local_directory(parent_dir: Path, name: str, description: str = "", keywords: list = None) -> None:
+def create_local_directory(parent_dir: Path, name: str, author: str, mail: str, description: str = "", keywords: list = None) -> None:
     mkdir(path=parent_dir / name)
     for dirName in _dirs:
         full_path = parent_dir / name / dirName
@@ -34,6 +34,8 @@ def create_local_directory(parent_dir: Path, name: str, description: str = "", k
             file_content = fp.read()
         file_content = replace_variable(content=file_content, variable="<NAME>", data=name)
         file_content = replace_variable(content=file_content, variable="<DESCRIPTION>", data=description)
+        file_content = replace_variable(content=file_content, variable="<AUTHOR>", data=author)
+        file_content = replace_variable(content=file_content, variable="<MAIL>", data=mail)
         if keywords:
             file_content = replace_variable(content=file_content,
                                             variable="<KEYWORDS>",
@@ -123,6 +125,12 @@ def construct_argument_parser() -> ArgumentParser:
     p.add_argument("name",
                    help="the name of the new python project",
                    type=str)
+    p.add_argument("author",
+                   help="the author of the new python project",
+                   type=str)
+    p.add_argument("mail",
+                   help="the mail of the author",
+                   type=str)
     p.add_argument("-descr",
                    "--description",
                    help="a short description of the python project",
@@ -181,7 +189,11 @@ def setup_logging(disabled: bool, level) -> None:
 def main(args: Namespace) -> None:
     parent_dir = Path(args.parent_dir) if args.parent_dir else Path.cwd()
     setup_logging(disabled=args.logDisabeld, level=args.logLevel)
-    create_local_directory(parent_dir=parent_dir, name=args.name, description=args.description,
+    create_local_directory(parent_dir=parent_dir,
+                           name=args.name,
+                           author=args.author,
+                           mail=args.mail,
+                           description=args.description,
                            keywords=args.keywords)
     logging.debug(msg=f"created local dir at: {str(parent_dir / args.name)}")
     if not args.no_git:
