@@ -2,7 +2,7 @@ from pathlib import Path
 from os import mkdir
 from subprocess import run, CalledProcessError
 from argparse import ArgumentParser, Namespace
-import typing
+import logging
 
 _dirs = ["_core", "scripts", "tests", "data"]
 _files = {
@@ -14,152 +14,186 @@ _files = {
     ".gitignore": Path(__file__).parent / Path("templates/[template]gitignore")
 }
 
-class Logger:
 
-    verbosity_types = [0, 1, 2]
-    def __init__(self, verbosity: int) -> None:
-        if (not type(verbosity) == int):
-            raise TypeError(f"The argument 'verbosity' must be of type int")
-        if (verbosity not in self.verbosity_types):
-            raise ValueError(f"The argument 'verbosity' must be one of {self.verbosity_types}")
-        self.verbosity = verbosity
-
-    def log(self, normal: str, verbose: str) -> None:
-        if (self.verbosity == 0):
-            return
-        if (self.verbosity == 1):
-            print(normal)
-        if (self.verbosity == 2):
-            print(verbose)
-
-def replaceVariable(content: str, variable: str, data: str) -> str:
-    if (content.__contains__(variable)):
-            content = content.replace(variable, data)
+def replace_variable(content: str, variable: str, data: str) -> str:
+    if variable in content:
+        content = content.replace(variable, data)
     return content
 
-def createLocalDirectory(parentDir: Path, name: str, description: str = "", keywords: list = None) -> None:
-    mkdir(path = parentDir / name)
-    for dirName in _dirs:
-        fullPath = parentDir / name / dirName
-        mkdir(path = fullPath)
-        if (dirName == "_core"):
-            open(file = fullPath / f"{name}.py",  mode = "x").close()
-        open(file = fullPath / "__init__.py",  mode = "x").close()
-    for fileName in _files.keys():
-        with open(file = _files[fileName], mode = "r") as fp:
-            fileContent = fp.read()
-        fileContent = replaceVariable(content = fileContent, variable = "<NAME>", data = name)
-        fileContent = replaceVariable(content = fileContent, variable = "<DESCRIPTION>", data = description)
-        if (keywords):
-            fileContent = replaceVariable(content = fileContent, variable = "<KEYWORDS>", data = "[" +
-                                                                                                 ", ".join(keywords) +
-                                                                                                 "]")
-        else:
-            fileContent = replaceVariable(content = fileContent, variable = "<KEYWORDS>", data = "[]")
-        with open(file = parentDir / name / fileName, mode = "x") as fp:
-            fp.write(fileContent)
 
-def writeUrlInLocalFiles(path: Path, url: str) -> None:
-    fullPath = path / "setup.py"
-    with open(file = fullPath, mode = "r") as fp:
+def create_local_directory(parent_dir: Path, name: str, description: str = "", keywords: list = None) -> None:
+    mkdir(path=parent_dir / name)
+    for dirName in _dirs:
+        full_path = parent_dir / name / dirName
+        mkdir(path=full_path)
+        if dirName == "_core":
+            open(file=full_path / f"{name}.py", mode="x").close()
+        open(file=full_path / "__init__.py", mode="x").close()
+    for file_name in _files.keys():
+        with open(file=_files[file_name], mode="r") as fp:
+            file_content = fp.read()
+        file_content = replace_variable(content=file_content, variable="<NAME>", data=name)
+        file_content = replace_variable(content=file_content, variable="<DESCRIPTION>", data=description)
+        if keywords:
+            file_content = replace_variable(content=file_content,
+                                            variable="<KEYWORDS>",
+                                            data="[" + ", ".join(keywords) + "]")
+        else:
+            file_content = replace_variable(content=file_content, variable="<KEYWORDS>", data="[]")
+        with open(file=parent_dir / name / file_name, mode="x") as fp:
+            fp.write(file_content)
+
+
+def write_url_in_local_files(path: Path, url: str) -> None:
+    full_path = path / "setup.py"
+    with open(file=full_path, mode="r") as fp:
         content = fp.read()
-    content = replaceVariable(content = content, variable = "<URL>", data = url)
-    with open(file = fullPath, mode = "w") as fp:
+    content = replace_variable(content=content, variable="<URL>", data=url)
+    with open(file=full_path, mode="w") as fp:
         fp.write(content)
 
-def createLocalGitRepo(path: Path) -> None:
+
+def create_local_git_repo(path: Path) -> None:
     try:
-        run(["git", "init"], shell = True, cwd = str(path), check = True)
+        run(["git", "init"], shell=True, cwd=str(path), check=True)
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
 
-def commitAllChangesLoacal(path: Path) -> None:
+
+def commit_all_changes_local(path: Path) -> None:
     try:
-        run(["git", "commit", "-m", '"initial commit by initpyproj"'], shell = True, cwd = str(path), check = True)
+        run(["git", "commit", "-m", '"initial commit by initpyproj"'], shell=True, cwd=str(path), check=True)
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
 
-def addAllChangesLocal(path: Path) -> None:
+
+def add_all_changes_local(path: Path) -> None:
     try:
-        run(["git", "add", "-A"], shell = True, cwd = str(path), check = True)
+        run(["git", "add", "-A"], shell=True, cwd=str(path), check=True)
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
 
-def pushLocalChanges(path: Path) -> None:
+
+def push_local_changes(path: Path) -> None:
     try:
-        run(["git", "commit", "push"], shell = True, cwd = str(path), check = True)
+        run(["git", "commit", "push"], shell=True, cwd=str(path), check=True)
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
 
-def createGitHubRepo(path: Path, name: str, description: str = None) -> str:
+
+def create_git_hub_repo(path: Path, name: str, description: str = None, private: str = False) -> str | None:
     try:
-        if (description):
-            stdout = run(["gh", "repo", "create", f"{name}", f"-d={description}", "--public", "-r=origin", "-s=."],
-                         shell = True, cwd = str(path), check = True, capture_output = True, text = True).stdout
-        else:
-            stdout = run(["gh", "repo", "create", f"{name}", "--public", "-r=origin", "-s=."], shell = True,
-                         cwd = str(path), check = True, capture_output = True, text = True).stdout
+        command = ["gh", "repo", "create", f"{name}", "-r=origin", "-s=."]
+        if description:
+            command.append(f"-d={description}")
+        if private:
+            command.append("--private")
+        stdout = run(command, shell=True, cwd=str(path), check=True, capture_output=True, text=True).stdout
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
-    protocoll = getGitHubCLIProtocoll()
-    if (protocoll == "https"):
-        startKey = "https://github.com/"
-        endKey = ".git"
-        start = stdout.find(startKey)
-        end = stdout.find(endKey) + len(endKey)
-        return stdout[start: end + 1] if not startKey == -1 else None
+    protocol = get_git_hub_cli_protocol()
+    if protocol == "https":
+        start_key = "https://github.com/"
+        end_key = ".git"
+        start = stdout.find(start_key)
+        end = stdout.find(end_key) + len(end_key)
+        return stdout[start: end + 1] if not start_key == -1 else None
     else:
         return None
 
-def getGitHubCLIProtocoll() -> str:
-    key = "git_protocoll="
+
+def get_git_hub_cli_protocol() -> str:
+    key = "git_protocol="
     try:
-        stdout = run(["gh", "config", "list"], shell = True, check = True, capture_output = True, text = True).stdout
+        stdout = run(["gh", "config", "list"], shell=True, check=True, capture_output=True, text=True).stdout
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
     start = stdout.find(key) + len(key)
     end = stdout.find("\n", start)
     return stdout[start: end + 1]
 
-def constructArgumentParser() -> ArgumentParser:
-    parser = ArgumentParser(
-        prog = "initpyproj",
-        description = "Initialize a empty python project; make it a git repo; and sync it with a new github repo",
-        add_help = True, 
-        allow_abbrev = True
-        )
-    parser.add_argument("name", help = "the name of the new python project", type = str)
-    parser.add_argument("-d", "--description", help = "a short description of the python project", type = str,
-                        default = "")
-    parser.add_argument("-kw", "--keywords", help = "some keywords for the python project", nargs = "*")
-    parser.add_argument("-dir", "--parent-dir",
-                        help = "the parent dir of the python project, if omitted the current working directory is used")
-    parser.add_argument("--no-git", help = "will not create a local git repo (and no GitHub repo)",
-                        action = "store_true")
-    parser.add_argument("--no-GitHub", help = "will create a local git repo but no GitHub repo", action = "store_true")
-    verbosityGroup = parser.add_mutually_exclusive_group()
-    verbosityGroup.add_argument("-v", "--verbose", help = "enables verbose output", action = "store_true")
-    verbosityGroup.add_argument("-q", "--quiet", help = "disables any output", action = "store_true")
 
-    return parser
+def construct_argument_parser() -> ArgumentParser:
+    p = ArgumentParser(
+        prog="initpyproj",
+        description="Initialize a empty python project; make it a git repo; and sync it with a new github repo",
+        add_help=True,
+        allow_abbrev=True
+    )
+    p.add_argument("name",
+                   help="the name of the new python project",
+                   type=str)
+    p.add_argument("-descr",
+                   "--description",
+                   help="a short description of the python project",
+                   type=str,
+                   default="")
+    p.add_argument("-kw",
+                   "--keywords",
+                   help="some keywords for the python project",
+                   nargs="*")
+    p.add_argument("-dir",
+                   "--parent-dir",
+                   help="the parent dir of the python project, if omitted the current working directory is used",
+                   dest="dir")
+    git_group = p.add_argument_group()
+    git_group.add_argument("--no-git",
+                           help="will not create a local git repo (and no GitHub repo)",
+                           action="store_true",
+                           dest="git")
+    git_group.add_argument("--no-GitHub",
+                           help="will create a local git repo but no GitHub repo",
+                           action="store_true",
+                           dest="git_hub")
+    git_group.add_argument("--private",
+                           help="will create the GitHub as a public repo",
+                           action="store_true",
+                           default=False)
+    verbosity_group = p.add_mutually_exclusive_group()
+    verbosity_group.add_argument("-v",
+                                 "--verbose",
+                                 help="enables verbose output",
+                                 action="store_const",
+                                 const=logging.INFO,
+                                 dest="logLevel")
+    verbosity_group.add_argument("-q",
+                                 "--quiet",
+                                 help="disables any output",
+                                 action="store_true",
+                                 default=False,
+                                 dest="logDisabled")
+    verbosity_group.add_argument("-d",
+                                 "--debug",
+                                 help="disables any output",
+                                 action="store_const",
+                                 const=logging.DEBUG,
+                                 dest="logLevel")
+
+    return p
+
+
+def setup_logging(disabled: bool, level) -> None:
+    logging.basicConfig(level=level)
+    if disabled:
+        logging.disable()
+
 
 def main(args: Namespace) -> None:
-    parentDir = Path(args.parent_dir) if args.parent_dir else Path.cwd()
-    path = parentDir / args.name
-    logger = Logger(verbosity = 1)
-    if (args.quiet):
-        logger = Logger(verbosity=0)
-    elif (args.verbose):
-        logger = Logger(verbosity=2)
-    createLocalDirectory(parentDir = parentDir, name = args.name, description = args.description,
-                         keywords = args.keywords)
-    if (not args.no_git):
-        raise NotImplementedError()
-    # create git repo
-    if (not (args.no_git or args.no_GitHub)):
-        raise NotImplementedError()
-    # create git hub repo
+    parent_dir = Path(args.parent_dir) if args.parent_dir else Path.cwd()
+    setup_logging(disabled=args.logDisabeld, level=args.logLevel)
+    create_local_directory(parent_dir=parent_dir, name=args.name, description=args.description,
+                           keywords=args.keywords)
+    if not args.no_git:
+        create_local_git_repo(path=parent_dir / args.name)
+        add_all_changes_local(path=parent_dir / args.name)
+        commit_all_changes_local(path=parent_dir / args.name)
+    if not (args.no_git or args.no_GitHub):
+        create_git_hub_repo(path=parent_dir / args.name,
+                            name=args.name,
+                            description=args.description,
+                            private=args.private)
 
-if (__name__ == "__main__"):
-    parser = constructArgumentParser()
+
+if __name__ == "__main__":
+    parser = construct_argument_parser()
     main(parser.parse_args())
