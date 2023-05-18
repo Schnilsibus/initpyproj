@@ -21,7 +21,14 @@ def replace_variable(content: str, variable: str, data: str) -> str:
     return content
 
 
-def create_local_directory(parent_dir: Path, name: str, author: str, mail: str, description: str = "", keywords: list = None) -> None:
+def create_local_directory(
+        parent_dir: Path,
+        name: str,
+        author: str,
+        mail: str,
+        description: str = "",
+        keywords: list = None
+) -> None:
     mkdir(path=parent_dir / name)
     for dirName in _dirs:
         full_path = parent_dir / name / dirName
@@ -57,62 +64,37 @@ def write_url_in_local_files(path: Path, url: str) -> None:
 
 def create_local_git_repo(path: Path) -> None:
     try:
-        run(["git", "init"], shell=True, cwd=str(path), check=True)
+        run(["git", "init", "-q"], shell=True, cwd=str(path), check=True)
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
 
 
 def commit_all_changes_local(path: Path) -> None:
     try:
-        run(["git", "commit", "-m", '"initial commit by initpyproj"'], shell=True, cwd=str(path), check=True)
+        run(["git", "commit", "-m", '"initial commit by initpyproj"', "-q"], shell=True, cwd=str(path), check=True)
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
 
 
 def add_all_changes_local(path: Path) -> None:
     try:
-        run(["git", "add", "-A"], shell=True, cwd=str(path), check=True)
+        run(["git", "add", "-A"], shell=True, cwd=str(path), check=True, capture_output=True)
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
 
 
-def push_local_changes(path: Path) -> None:
+def create_git_hub_repo(path: Path, name: str, description: str = None, private: str = False) -> None:
     try:
-        run(["git", "commit", "push"], shell=True, cwd=str(path), check=True)
-    except CalledProcessError as ex:
-        raise ChildProcessError(ex.stderr)
-
-
-def create_git_hub_repo(path: Path, name: str, description: str = None, private: str = False) -> str | None:
-    try:
-        command = ["gh", "repo", "create", f"{name}", "-r=origin", "-s=."]
+        command = ["gh", "repo", "create", f"{name}", "-r=origin", "-s=.", "--push"]
         if description:
             command.append(f"-d={description}")
         if private:
             command.append("--private")
-        stdout = run(command, shell=True, cwd=str(path), check=True, capture_output=True, text=True).stdout
+        else:
+            command.append("--public")
+        run(command, shell=True, cwd=str(path), check=True, capture_output=True)
     except CalledProcessError as ex:
         raise ChildProcessError(ex.stderr)
-    protocol = get_git_hub_cli_protocol()
-    if protocol == "https":
-        start_key = "https://github.com/"
-        end_key = ".git"
-        start = stdout.find(start_key)
-        end = stdout.find(end_key) + len(end_key)
-        return stdout[start: end + 1] if not start_key == -1 else None
-    else:
-        return None
-
-
-def get_git_hub_cli_protocol() -> str:
-    key = "git_protocol="
-    try:
-        stdout = run(["gh", "config", "list"], shell=True, check=True, capture_output=True, text=True).stdout
-    except CalledProcessError as ex:
-        raise ChildProcessError(ex.stderr)
-    start = stdout.find(key) + len(key)
-    end = stdout.find("\n", start)
-    return stdout[start: end + 1]
 
 
 def construct_argument_parser() -> ArgumentParser:
@@ -147,12 +129,12 @@ def construct_argument_parser() -> ArgumentParser:
     git_group = p.add_argument_group()
     git_group.add_argument("--no-git",
                            help="will not create a local git repo (and no GitHub repo)",
-                           action="store_true",
+                           action="store_false",
                            dest="git")
     git_group.add_argument("--no-GitHub",
                            help="will create a local git repo but no GitHub repo",
-                           action="store_true",
-                           dest="git_hub")
+                           action="store_false",
+                           dest="GitHub")
     git_group.add_argument("--private",
                            help="will create the GitHub as a public repo",
                            action="store_true",
@@ -187,27 +169,26 @@ def setup_logging(disabled: bool, level) -> None:
 
 
 def main(args: Namespace) -> None:
-    parent_dir = Path(args.parent_dir) if args.parent_dir else Path.cwd()
-    setup_logging(disabled=args.logDisabeld, level=args.logLevel)
+    parent_dir = Path(args.dir) if args.dir else Path.cwd()
+    setup_logging(disabled=args.logDisabled, level=args.logLevel)
     create_local_directory(parent_dir=parent_dir,
                            name=args.name,
                            author=args.author,
                            mail=args.mail,
                            description=args.description,
                            keywords=args.keywords)
-    logging.debug(msg=f"created local dir at: {str(parent_dir / args.name)}")
-    if not args.no_git:
+    logging.info(msg=f"created local dir at: {str(parent_dir / args.name)}")
+    if args.git:
         create_local_git_repo(path=parent_dir / args.name)
         add_all_changes_local(path=parent_dir / args.name)
         commit_all_changes_local(path=parent_dir / args.name)
-        logging.debug(msg=f"created local git repo at: {str(parent_dir / args.name)}")
-    if not (args.no_git or args.no_GitHub):
-        gh_repo_info = create_git_hub_repo(path=parent_dir / args.name,
-                                           name=args.name,
-                                           description=args.description,
-                                           private=args.private)
-        push_local_changes(path=parent_dir / args.name)
-        logging.debug(msg=f"created GitHub repo: {gh_repo_info}")
+        logging.info(msg=f"created local git repo at: {str(parent_dir / args.name)}")
+    if args.git and args.GitHub:
+        create_git_hub_repo(path=parent_dir / args.name,
+                            name=args.name,
+                            description=args.description,
+                            private=args.private)
+        logging.info(msg="created GitHub repo")
 
 
 if __name__ == "__main__":
