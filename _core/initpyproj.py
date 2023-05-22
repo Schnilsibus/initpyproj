@@ -117,7 +117,7 @@ def construct_argument_parser() -> ArgumentParser:
                    "--parent-dir",
                    help="the parent dir of the python project, if omitted the current working directory is used",
                    dest="dir")
-    git_group = p.add_argument_group()
+    git_group = p.add_mutually_exclusive_group()
     git_group.add_argument("--no-git",
                            help="will not create a local git repo (and no GitHub repo)",
                            action="store_false",
