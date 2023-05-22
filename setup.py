@@ -24,5 +24,6 @@ setuptools.setup(
         "Programming Language :: Python"
     ],
     test_suite="tests",
+    include_package_data=True,
     package_data={"templates": ["[template]*"]}
 )
