@@ -5,7 +5,7 @@ with open("README.md", "r") as fp:
 
 setuptools.setup(
     name="initpyproj",
-    version="1.0.1",
+    version="1.0.2",
     author="Nils Urbach",
     author_email="ndu01u@gmail.com",
     description="Initialize an empty python project; make it a git repo; and sync it with a new GitHub repo",
