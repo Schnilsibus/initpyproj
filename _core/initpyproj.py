@@ -4,6 +4,7 @@ from subprocess import run, CalledProcessError
 from argparse import ArgumentParser, Namespace
 import logging
 
+
 _dirs = ["_core", "scripts", "tests", "data"]
 _files = {
     "LICENSE": Path(__file__).parent / Path("templates/[template]LICENSE"),
