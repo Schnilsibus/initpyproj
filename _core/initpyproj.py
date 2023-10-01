@@ -7,12 +7,12 @@ import logging
 
 _dirs = ["_core", "scripts", "tests"]
 _files = {
-    "LICENSE": Path(__file__).parent / Path("templates/[template]LICENSE"),
-    "CHANGELOG.md": Path(__file__).parent / Path("templates/[template]CHANGELOG"),
-    "MANIFEST.in": Path(__file__).parent / Path("templates/[template]MANIFEST"),
-    "README.md": Path(__file__).parent / Path("templates/[template]README"),
-    "setup.py": Path(__file__).parent / Path("templates/[template]setup"),
-    ".gitignore": Path(__file__).parent / Path("templates/[template]gitignore")
+    "LICENSE": Path(__file__).parent / Path("initpyproj_templates/[template]LICENSE"),
+    "CHANGELOG.md": Path(__file__).parent / Path("initpyproj_templates/[template]CHANGELOG"),
+    "MANIFEST.in": Path(__file__).parent / Path("initpyproj_templates/[template]MANIFEST"),
+    "README.md": Path(__file__).parent / Path("initpyproj_templates/[template]README"),
+    "setup.py": Path(__file__).parent / Path("initpyproj_templates/[template]setup"),
+    ".gitignore": Path(__file__).parent / Path("initpyproj_templates/[template]gitignore")
 }
 
 

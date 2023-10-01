@@ -1,1 +1,1 @@
-recursive-include _core/templates/*
+recursive-include _core/initpyproj_templates *
