@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="MIT",
-    keywords=[],
+    keywords=["initialize", ],
     url="https://github.com/Schnilsibus/initpyproj",
     package_dir={"": "_core"},
     classifiers=[
