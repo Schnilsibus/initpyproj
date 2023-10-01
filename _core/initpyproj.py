@@ -5,7 +5,7 @@ from argparse import ArgumentParser, Namespace
 import logging
 
 
-_dirs = ["_core", "scripts", "tests", "data"]
+_dirs = ["_core", "scripts", "tests"]
 _files = {
     "LICENSE": Path(__file__).parent / Path("templates/[template]LICENSE"),
     "CHANGELOG.md": Path(__file__).parent / Path("templates/[template]CHANGELOG"),

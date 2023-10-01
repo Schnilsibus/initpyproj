@@ -5,7 +5,7 @@ with open("README.md", "r") as fp:
 
 setuptools.setup(
     name="initpyproj",
-    version="1.0.0",
+    version="1.0.1",
     author="Nils Urbach",
     author_email="ndu01u@gmail.com",
     description="Initialize an empty python project; make it a git repo; and sync it with a new GitHub repo",
@@ -24,6 +24,5 @@ setuptools.setup(
         "Programming Language :: Python"
     ],
     test_suite="tests",
-    include_package_data=True,
-    package_data={"templates": ["[template]*"]}
+    include_package_data=True
 )
